@@ -574,6 +574,65 @@ app.get('/prefixLabelSearch', function (req, res) {
 	});
 });
 
+app.post('/prefixLabelSearch', function (req, res) {
+	const data = req.body;
+	const taxa = data.taxa;
+	const type = data.nodeType;
+	var term = data.term;
+
+	var limit = 20;
+
+	console.log("Searching for term: "+term+" of type: "+type);
+
+	if (!term) {
+		res.status(400).send("<h1>400: Term not provided!</h1>");
+		return
+	}
+	if (!type) {
+		res.status(400).send("<h1>400: Type not provided!</h1>");
+		return
+	}
+
+	const collection = getCollectionForType(type);
+	if (!collection) {
+		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
+		return
+	}
+
+	console.log("Searching for nodes starting with: "+term);
+	var regexTerm = new RegExp('^'+term.toLowerCase())
+
+	var searchTerm = taxa === undefined ? { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]} : { $and: [{$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}, { taxa: { $in: taxa }}]};
+
+	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
+		if (err) {
+			console.log(err);
+			return
+		}
+		if (!docs) {
+			res.status(404).send('<h1>404: Node not found.</h1>');
+			return
+		}
+		//console.log(docs);
+		res.json(docs);
+	});
+
+	console.log("Searching in collection: " + collection);
+
+	collection.find({ $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]}, function (err, docs) {
+		if (err) {
+			console.log(err);
+			return
+		}
+		if (!docs) {
+			res.status(404).send('<h1>404: Node not found.</h1>');
+			return
+		}
+		//console.log(docs);
+		res.json(docs);
+	});
+});
+
 
 
 app.get('/labelSearch', function (req, res) {
