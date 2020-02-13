@@ -602,7 +602,7 @@ app.post('/prefixLabelSearch', function (req, res) {
 	console.log("Searching for nodes starting with: "+term);
 	var regexTerm = new RegExp('^'+term.toLowerCase());
 
-	var searchTerm = taxa === undefined ? { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]} : { $and: [{$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}, { taxa: { $in: taxa }}]};
+	var searchTerm = taxa === undefined ? { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]} : { $and: [{$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}, { taxon: { $in: taxa }}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
