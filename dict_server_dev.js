@@ -69,7 +69,13 @@ function getCollectionForType(type) {
 	} else if (type === "gene") {
 		return db.gene
 	} else if (type === "go-term") {
-		return db.go
+		return db.goall
+	} else if (type === "go-bp") {
+		return db.gobp
+	} else if (type === "go-cc") {
+		return db.gocc
+	} else if (type === "go-mf") {
+		return db.gomf
 	} else if (type === "taxon") {
 		return db.taxon
 	}
