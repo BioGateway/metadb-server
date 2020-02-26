@@ -43,7 +43,7 @@ function getCollectionForUri(uri) {
 	} else if (uri.startsWith('http://rdf.biogateway.eu/gene/')) {
 		return db.gene;
 	} else if (uri.startsWith('http://purl.obolibrary.org/obo/GO_')) {
-		return db.go;
+		return db.goall;
 	} else if (uri.startsWith('http://purl.obolibrary.org/obo/NCBITaxon_')) {
 		return db.taxon;
 	} else if (uri.startsWith('http://purl.obolibrary.org/obo/PR_')) {
