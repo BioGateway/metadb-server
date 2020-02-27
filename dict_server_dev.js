@@ -135,7 +135,7 @@ app.post('/findNodesWithIdentifier', function (req, res) {
 	const values = data.values;
 	const returnType = data.returnType;
 	const type = data.nodeType;
-	const collection = getCollectionForType(type)
+	const collection = getCollectionForType(type);
 
 	console.log("Searching in collection: " + collection);
 
@@ -158,7 +158,7 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 	const values = data.values;
 	const returnType = data.returnType;
 	const type = data.nodeType;
-	const collection = getCollectionForType(type)
+	const collection = getCollectionForType(type);
 	
 	console.log("Searching in collection: " + collection);
 
@@ -389,7 +389,7 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 	if (tfSymbol && tgSymbol) {
 		// Search for specific pubmedId for specific interaction:
 		
-		console.log("Searching for sentences between "+tfSymbol+" and "+tgSymbol+".")
+		console.log("Searching for sentences between "+tfSymbol+" and "+tgSymbol+".");
 		collection.find({pubmedId: pubmedId, TF: tfSymbol, TG: tgSymbol}, function (err, docs) {
 			if (err) {
 				console.log(err);
@@ -418,7 +418,7 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 		});
 	} else {
 		res.status(404).send('<h1>404: Data not found.</h1>');
-		return
+
 	}
 });
 
@@ -519,7 +519,7 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 	}
 	
 	console.log("Searching for nodes starting with: "+term);
-	var regexTerm = new RegExp('^'+term)
+	var regexTerm = new RegExp('^'+term);
 	
 	collection.find({prefLabel: { $regex: regexTerm }}).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) { 
@@ -562,9 +562,9 @@ app.get('/prefixLabelSearch', function (req, res) {
 	}
 	
 	console.log("Searching for nodes starting with: "+term);
-	var regexTerm = new RegExp('^'+term.toLowerCase())
+	var regexTerm = new RegExp('^'+term.toLowerCase());
 	
-	var searchTerm = { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}
+	var searchTerm = { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }, { _id: term }]};
 	
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) { 
@@ -608,7 +608,7 @@ app.post('/prefixLabelSearch', function (req, res) {
 	console.log("Searching for nodes starting with: "+term);
 	var regexTerm = new RegExp('^'+term.toLowerCase());
 
-	var searchTerm = taxa === undefined ? { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]} : { $and: [{$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}, { taxon: { $in: taxa }}]};
+	var searchTerm = taxa === undefined ? { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }, { _id: term }]} : { $and: [{$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}, { taxon: { $in: taxa }}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
