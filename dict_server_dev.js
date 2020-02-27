@@ -652,9 +652,10 @@ app.get('/labelSearch', function (req, res) {
 	
 	console.log("Searching "+type+"s for nodes containing: "+term);
 	var regexTerm = new RegExp(term, 'i');
-	
-	collection.find({prefLabel: { $regex: regexTerm }}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
-		if (err) { 
+	//$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]
+	//collection.find({prefLabel: { $regex: regexTerm }}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
+	collection.find({$or: [{ prefLabel: { $regex: regexTerm } }, { _id: term }]}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
+		if (err) {
 			console.log(err);
 			return
 		}
