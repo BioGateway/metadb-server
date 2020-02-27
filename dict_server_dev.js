@@ -158,11 +158,15 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 	const values = data.values;
 	const returnType = data.returnType;
 	const type = data.nodeType;
+	const taxa = data.taxa;
 	const collection = getCollectionForType(type);
 	
 	console.log("Searching in collection: " + collection);
 
-	collection.find({ $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]}, function (err, docs) {
+	// If taxa is defined, the query will be constrained by it.
+	var searchTerm = taxa === undefined ? { $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]} : { $and: [{ $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]}, { taxon: { $in: taxa }}]}
+
+	collection.find(searchTerm, function (err, docs) {
 		if (err) { 
 			console.log(err);
 			return
