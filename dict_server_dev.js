@@ -139,7 +139,7 @@ app.post('/findNodesWithIdentifier', function (req, res) {
 
 	console.log("Searching in collection: " + collection);
 
-	collection.find({ identifiers: { $in: values }}, function (err, docs) {
+	collection.find({ instances: { $in: values }}, function (err, docs) {
 		if (err) {
 			console.log(err);
 			return
