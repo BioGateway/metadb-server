@@ -586,7 +586,7 @@ app.get('/prefixLabelSearch', function (req, res) {
 
 app.post('/downloadLabels', function (req, res) {
 	const data = req.body;
-	const type = req.type;
+	const type = data.type;
 
 	const collection = getCollectionForType(type);
 	if (!collection) {
