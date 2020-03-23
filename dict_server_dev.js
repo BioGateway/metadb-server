@@ -584,6 +584,32 @@ app.get('/prefixLabelSearch', function (req, res) {
 	});
 });
 
+app.post('/downloadLabels', function (req, res) {
+	const data = req.body;
+	const type = req.type;
+
+	const collection = getCollectionForType(type);
+	if (!collection) {
+		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
+		return
+	}
+
+
+
+	collection.find({}, {prefLabel: 1}, function (err, docs) {
+		if (err) {
+			console.log(err);
+			res.status(500);
+			return
+		}
+		if (!docs) {
+			res.status(404).send('<h1>404: No data found.</h1>');
+			return
+		}
+		res.json(docs)
+	})
+});
+
 app.post('/prefixLabelSearch', function (req, res) {
 	const data = req.body;
 	const taxa = data.taxa;
