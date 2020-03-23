@@ -587,13 +587,11 @@ app.get('/prefixLabelSearch', function (req, res) {
 app.get('/downloadLabels', function (req, res) {
 	const type = req.query.type;
 
-	const collection = getCollectionForType(type);
+	const collection = db[type];
 	if (!collection) {
 		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
 		return
 	}
-
-
 
 	collection.find({}, {prefLabel: 1}, function (err, docs) {
 		if (err) {
