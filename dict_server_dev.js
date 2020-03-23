@@ -584,9 +584,8 @@ app.get('/prefixLabelSearch', function (req, res) {
 	});
 });
 
-app.post('/downloadLabels', function (req, res) {
-	const data = req.body;
-	const type = data.type;
+app.get('/downloadLabels', function (req, res) {
+	const type = req.query.type;
 
 	const collection = getCollectionForType(type);
 	if (!collection) {
