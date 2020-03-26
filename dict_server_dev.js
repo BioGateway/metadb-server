@@ -586,6 +586,7 @@ app.get('/prefixLabelSearch', function (req, res) {
 
 app.get('/downloadLabels', function (req, res) {
 	const type = req.query.type;
+	const format = req.query.format;
 
 	const collection = db[type];
 	if (!collection) {
@@ -603,7 +604,19 @@ app.get('/downloadLabels', function (req, res) {
 			res.status(404).send('<h1>404: No data found.</h1>');
 			return
 		}
-		res.json(docs)
+		if (format === 'tsv') {
+			var tsv = "label\turi\n";
+
+			for (i = 0; i < docs.length; i++) {
+				var node = docs[i];
+				if (node != null) {
+					tsv += `${node.prefLabel}\t${node._id}\n`;
+				}
+			}
+			res.send(tsv);
+		} else {
+			res.json(docs);
+		}
 	})
 });
 
