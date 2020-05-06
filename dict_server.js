@@ -2,7 +2,7 @@ var express = require('express');
 var cors = require('cors');
 var bodyParser = require('body-parser');
 var mongojs = require('mongojs');
-var db = mongojs('bgw-cache', ['all']);
+var db = mongojs('bgw-prod', ['all']);
 var sentenceDB = mongojs('biogw-dict', ['all']);
 var path = require('path');
 
