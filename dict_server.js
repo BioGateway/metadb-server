@@ -69,7 +69,13 @@ function getCollectionForType(type) {
 	} else if (type === "gene") {
 		return db.gene
 	} else if (type === "go-term") {
-		return db.go
+		return db.goall
+	} else if (type === "go-bp") {
+		return db.gobp
+	} else if (type === "go-cc") {
+		return db.gocc
+	} else if (type === "go-mf") {
+		return db.gomf
 	} else if (type === "taxon") {
 		return db.taxon
 	}
@@ -152,11 +158,15 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 	const values = data.values;
 	const returnType = data.returnType;
 	const type = data.nodeType;
-	const collection = getCollectionForType(type)
+	const taxa = data.taxa;
+	const collection = getCollectionForType(type);
 	
 	console.log("Searching in collection: " + collection);
 
-	collection.find({ $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]}, function (err, docs) {
+	// If taxa is defined, the query will be constrained by it.
+	var searchTerm = taxa === undefined ? { $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]} : { $and: [{ $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]}, { taxon: { $in: taxa }}]}
+
+	collection.find(searchTerm, function (err, docs) {
 		if (err) { 
 			console.log(err);
 			return
@@ -383,7 +393,7 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 	if (tfSymbol && tgSymbol) {
 		// Search for specific pubmedId for specific interaction:
 		
-		console.log("Searching for sentences between "+tfSymbol+" and "+tgSymbol+".")
+		console.log("Searching for sentences between "+tfSymbol+" and "+tgSymbol+".");
 		collection.find({pubmedId: pubmedId, TF: tfSymbol, TG: tgSymbol}, function (err, docs) {
 			if (err) {
 				console.log(err);
@@ -412,7 +422,7 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 		});
 	} else {
 		res.status(404).send('<h1>404: Data not found.</h1>');
-		return
+
 	}
 });
 
@@ -513,7 +523,7 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 	}
 	
 	console.log("Searching for nodes starting with: "+term);
-	var regexTerm = new RegExp('^'+term)
+	var regexTerm = new RegExp('^'+term);
 	
 	collection.find({prefLabel: { $regex: regexTerm }}).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) { 
@@ -556,12 +566,92 @@ app.get('/prefixLabelSearch', function (req, res) {
 	}
 	
 	console.log("Searching for nodes starting with: "+term);
-	var regexTerm = new RegExp('^'+term.toLowerCase())
+	var regexTerm = new RegExp('^'+term.toLowerCase());
 	
-	var searchTerm = { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}
+	var searchTerm = { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }, { _id: term }]};
 	
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
-		if (err) { 
+		if (err) {
+			console.log(err);
+			return
+		}
+		if (!docs) {
+			res.status(404).send('<h1>404: Node not found.</h1>');
+			return
+		}
+		//console.log(docs);
+		res.json(docs);
+	});
+});
+
+app.get('/downloadLabels', function (req, res) {
+	const type = req.query.type;
+	const format = req.query.format;
+
+	const collection = db[type];
+	if (!collection) {
+		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
+		return
+	}
+
+	collection.find({}, {prefLabel: 1}, function (err, docs) {
+		if (err) {
+			console.log(err);
+			res.status(500);
+			return
+		}
+		if (!docs) {
+			res.status(404).send('<h1>404: No data found.</h1>');
+			return
+		}
+		if (format === 'tsv') {
+			var tsv = "label\turi\n";
+
+			for (i = 0; i < docs.length; i++) {
+				var node = docs[i];
+				if (node != null) {
+					tsv += `${node.prefLabel}\t${node._id}\n`;
+				}
+			}
+			res.send(tsv);
+		} else {
+			res.json(docs);
+		}
+	})
+});
+
+app.post('/prefixLabelSearch', function (req, res) {
+	const data = req.body;
+	const taxa = data.taxa;
+	const type = data.type;
+	const term = data.term;
+
+	var limit = 20;
+
+	console.log("Searching for term: "+term+" of type: "+type);
+
+	if (!term) {
+		res.status(400).send("<h1>400: Term not provided!</h1>");
+		return
+	}
+	if (!type) {
+		res.status(400).send("<h1>400: Type not provided!</h1>");
+		return
+	}
+
+	const collection = getCollectionForType(type);
+	if (!collection) {
+		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
+		return
+	}
+
+	console.log("Searching for nodes starting with: "+term);
+	var regexTerm = new RegExp('^'+term.toLowerCase());
+
+	var searchTerm = taxa === undefined ? { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }, { _id: term }]} : { $and: [{$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]}, { taxon: { $in: taxa }}]};
+
+	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
+		if (err) {
 			console.log(err);
 			return
 		}
@@ -602,9 +692,10 @@ app.get('/labelSearch', function (req, res) {
 	
 	console.log("Searching "+type+"s for nodes containing: "+term);
 	var regexTerm = new RegExp(term, 'i');
-	
-	collection.find({prefLabel: { $regex: regexTerm }}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
-		if (err) { 
+	//$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]
+	//collection.find({prefLabel: { $regex: regexTerm }}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
+	collection.find({$or: [{ prefLabel: { $regex: regexTerm } }, { _id: term }]}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
+		if (err) {
 			console.log(err);
 			return
 		}
