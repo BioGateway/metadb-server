@@ -347,7 +347,7 @@ app.get('/fetch', function (req, res) {
 			return
 		}
 		if (!docs) {
-			console.log(uri + 'not found!');
+			console.log(uri + ' not found in ' + collection._name);
 			res.status(404).send('<h1>404: Node not found.</h1>');
 			return
 		}
@@ -363,7 +363,7 @@ app.get('/fetch', function (req, res) {
 				return
 			}
 			if (!docs) {
-				console.log('No results found for ' + label);
+				console.log('No results found for ' + label + ' in collection ');
 				res.status(404).send('<h1>404: Node not found.</h1>');
 				return
 			}
