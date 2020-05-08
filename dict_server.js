@@ -4,7 +4,6 @@ var bodyParser = require('body-parser');
 var mongojs = require('mongojs');
 var db = mongojs('bgw-prod', ['all']);
 var sentenceDB = mongojs('biogw-dict', ['all']);
-var path = require('path');
 
 const port = 3002;
 
@@ -191,7 +190,7 @@ app.post('/fetch', function (req, res) {
 	var promises = [];
 	
 	for (i = 0; i < uris.length; i++) {
-		var uri = uris[i];
+		const uri = uris[i];
 		const collection = getCollectionForUri(uri);
 		var node = new Promise(function (resolve, reject) {
 			collection.findOne({_id: uri}, function (err, docs) {
@@ -212,7 +211,7 @@ app.post('/fetch', function (req, res) {
 		if (returnType === 'tsv') {
 			var tsv = "uri\tprefLabel\tdescription";
 			if (extraFields && extraFields.length) {
-				for (index in extraFields) {
+				for (const index in extraFields) {
 					tsv += "\t"+extraFields[index];
 				}
 			}
@@ -222,7 +221,7 @@ app.post('/fetch', function (req, res) {
 				if (node != null) {
 					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition;
 					if (extraFields && extraFields.length) {
-						for (index in extraFields) {
+						for (const index in extraFields) {
 							data = node[extraFields[index]];
 							if (data) tsv += "\t"+data;
 						}
@@ -348,6 +347,7 @@ app.get('/fetch', function (req, res) {
 			return
 		}
 		if (!docs) {
+			console.log(uri + 'not found!');
 			res.status(404).send('<h1>404: Node not found.</h1>');
 			return
 		}
@@ -363,6 +363,7 @@ app.get('/fetch', function (req, res) {
 				return
 			}
 			if (!docs) {
+				console.log('No results found for ' + label);
 				res.status(404).send('<h1>404: Node not found.</h1>');
 				return
 			}
