@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
 app.listen(port, function () {
-	console.log('Server started on port: '+port);
+	console.log('Server started on port: '+port+' with database '+databaseName);
 	db.prot.runCommand('count', function (err, res) {
 		if (err) { console.log(err) }
 		const count = res.n;
