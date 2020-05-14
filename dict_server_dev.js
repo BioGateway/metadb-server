@@ -164,7 +164,7 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 	console.log("Searching in collection: " + collection);
 
 	// If taxa is defined, the query will be constrained by it.
-	const searchTerm = taxa === undefined ? {$or: [{prefLabel: {$in: values}}, {synonyms: {$in: values}}]} : {$and: [{$or: [{prefLabel: {$in: values}}, {synonyms: {$in: values}}]}, {taxon: {$in: taxa}}]};
+	const searchTerm = taxa === undefined ? {$or: [{prefLabel: {$in: values}}, {lcSynonyms: {$in: values}}]} : {$and: [{$or: [{prefLabel: {$in: values}}, {lcSynonyms: {$in: values}}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm, function (err, docs) {
 		if (err) { 
@@ -212,7 +212,7 @@ app.post('/fetch', function (req, res) {
 		if (returnType === 'tsv') {
 			let tsv = "uri\tprefLabel\tdescription";
 			if (extraFields && extraFields.length) {
-				for (index in extraFields) {
+				for (const index in extraFields) {
 					tsv += "\t"+extraFields[index];
 				}
 			}
@@ -222,7 +222,7 @@ app.post('/fetch', function (req, res) {
 				if (node != null) {
 					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition;
 					if (extraFields && extraFields.length) {
-						for (index in extraFields) {
+						for (const index in extraFields) {
 							data = node[extraFields[index]];
 							if (data) tsv += "\t"+data;
 						}
@@ -348,6 +348,7 @@ app.get('/fetch', function (req, res) {
 			return
 		}
 		if (!docs) {
+			console.log(uri + ' not found in ' + collection._name);
 			res.status(404).send('<h1>404: Node not found.</h1>');
 			return
 		}
@@ -363,6 +364,7 @@ app.get('/fetch', function (req, res) {
 				return
 			}
 			if (!docs) {
+				console.log('No results found for ' + label + ' in collection ');
 				res.status(404).send('<h1>404: Node not found.</h1>');
 				return
 			}
@@ -567,10 +569,10 @@ app.get('/prefixLabelSearch', function (req, res) {
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
 
-	const searchTerm = {$or: [{lcLabel: regexTerm}, {synonyms: regexTerm}, {_id: term}]};
+	const searchTerm = {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
-		if (err) { 
+		if (err) {
 			console.log(err);
 			return
 		}
@@ -646,8 +648,7 @@ app.post('/prefixLabelSearch', function (req, res) {
 
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
-
-	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {synonyms: {$in: regexTerm}}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {synonyms: {$in: regexTerm}}]}, {taxon: {$in: taxa}}]};
+	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {

@@ -135,11 +135,11 @@ app.post('/findNodesWithIdentifier', function (req, res) {
 	const values = data.values;
 	const returnType = data.returnType;
 	const type = data.nodeType;
-	const collection = getCollectionForType(type)
+	const collection = getCollectionForType(type);
 
 	console.log("Searching in collection: " + collection);
 
-	collection.find({ identifiers: { $in: values }}, function (err, docs) {
+	collection.find({ instances: { $in: values }}, function (err, docs) {
 		if (err) {
 			console.log(err);
 			return
@@ -164,7 +164,7 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 	console.log("Searching in collection: " + collection);
 
 	// If taxa is defined, the query will be constrained by it.
-	const searchTerm = taxa === undefined ? {$or: [{prefLabel: {$in: values}}, {synonyms: {$in: values}}]} : {$and: [{$or: [{prefLabel: {$in: values}}, {synonyms: {$in: values}}]}, {taxon: {$in: taxa}}]};
+	const searchTerm = taxa === undefined ? {$or: [{prefLabel: {$in: values}}, {lcSynonyms: {$in: values}}]} : {$and: [{$or: [{prefLabel: {$in: values}}, {lcSynonyms: {$in: values}}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm, function (err, docs) {
 		if (err) { 
@@ -569,7 +569,7 @@ app.get('/prefixLabelSearch', function (req, res) {
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
 
-	const searchTerm = {$or: [{lcLabel: regexTerm}, {synonyms: regexTerm}, {_id: term}]};
+	const searchTerm = {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
@@ -648,8 +648,7 @@ app.post('/prefixLabelSearch', function (req, res) {
 
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
-
-	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {synonyms: regexTerm}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {synonyms: regexTerm}]}, {taxon: {$in: taxa}}]};
+	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
