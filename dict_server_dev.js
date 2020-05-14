@@ -1,21 +1,21 @@
-var express = require('express');
-var cors = require('cors');
-var bodyParser = require('body-parser');
-var mongojs = require('mongojs');
-var db = mongojs('bgw-dev', ['all']);
-var sentenceDB = mongojs('biogw-dict', ['all']);
-var path = require('path');
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const mongojs = require('mongojs');
+const sentenceDB = mongojs('biogw-dict', ['all']);
 
-const port = 3003;
+const databaseName = process.argv[2] || 'bgw-dev';
+const db = mongojs(databaseName, ['all']);
+const port = process.argv[3] || 3003;
 
-var app = express();
+const app = express();
 
 // This will add timestamps to log messages.
 console.logCopy = console.log.bind(console);
 console.log = function(data)
 {
-    var currentDate = '[' + new Date().toLocaleString() + '] ';
-    this.logCopy(currentDate, data);
+	const currentDate = '[' + new Date().toLocaleString() + '] ';
+	this.logCopy(currentDate, data);
 };
 
 app.use(cors());
@@ -26,7 +26,7 @@ app.listen(port, function () {
 	console.log('Server started on port: '+port);
 	db.prot.runCommand('count', function (err, res) {
 		if (err) { console.log(err) }
-		var count = res.n;
+		const count = res.n;
 		console.log('Server connected to MongoDB. Total proteins: '+count);
 	});
 });
@@ -83,10 +83,10 @@ function getCollectionForType(type) {
 }
 
 app.get('/findNodesWithFieldValue', function (req, res) {
-	var field = req.query.field; // The field to search in.
-	var value = req.query.value; // The value to match.
-	var type = req.query.type; // The node type. I.e. "Protein" or "Gene".
-	var limit = req.query.limit; // The max number of results.
+	const field = req.query.field; // The field to search in.
+	const value = req.query.value; // The value to match.
+	const type = req.query.type; // The node type. I.e. "Protein" or "Gene".
+	let limit = req.query.limit; // The max number of results.
 	
 	if (limit === null) {
 		limit = 20;
@@ -113,7 +113,7 @@ app.get('/findNodesWithFieldValue', function (req, res) {
 	}
 	
 	console.log("Searching "+type+"s for nodes with "+field+": "+value);
-	var searchTerm = {};
+	const searchTerm = {};
 	searchTerm[field] = value;
 	
 	collection.find(searchTerm).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
@@ -164,7 +164,7 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 	console.log("Searching in collection: " + collection);
 
 	// If taxa is defined, the query will be constrained by it.
-	var searchTerm = taxa === undefined ? { $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]} : { $and: [{ $or: [{ prefLabel: { $in: values }}, { synonyms: { $in: values }}]}, { taxon: { $in: taxa }}]}
+	const searchTerm = taxa === undefined ? {$or: [{prefLabel: {$in: values}}, {synonyms: {$in: values}}]} : {$and: [{$or: [{prefLabel: {$in: values}}, {synonyms: {$in: values}}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm, function (err, docs) {
 		if (err) { 
@@ -181,17 +181,17 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 });
 
 app.post('/fetch', function (req, res) {
-	var data = req.body;
-	var uris = data.uris;
+	let data = req.body;
+	let uris = data.uris;
 	if (!uris) uris = data.terms;
-	var returnType = data.returnType;
-	var type = data.nodeType;
-	var extraFields = data.extraFields;
-	
-	var promises = [];
-	
+	const returnType = data.returnType;
+	const type = data.nodeType;
+	const extraFields = data.extraFields;
+
+	const promises = [];
+
 	for (i = 0; i < uris.length; i++) {
-		var uri = uris[i];
+		const uri = uris[i];
 		const collection = getCollectionForUri(uri);
 		var node = new Promise(function (resolve, reject) {
 			collection.findOne({_id: uri}, function (err, docs) {
@@ -210,7 +210,7 @@ app.post('/fetch', function (req, res) {
 	// 	console.log(nodes);
 	// 	console.log(returnType);
 		if (returnType === 'tsv') {
-			var tsv = "uri\tprefLabel\tdescription";
+			let tsv = "uri\tprefLabel\tdescription";
 			if (extraFields && extraFields.length) {
 				for (index in extraFields) {
 					tsv += "\t"+extraFields[index];
@@ -218,7 +218,7 @@ app.post('/fetch', function (req, res) {
 			}
 			tsv += "\n";
 			for (i = 0; i < nodes.length; i++) {
-				var node = nodes[i];
+				const node = nodes[i];
 				if (node != null) {
 					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition;
 					if (extraFields && extraFields.length) {
@@ -238,28 +238,28 @@ app.post('/fetch', function (req, res) {
 });
 
 app.post('/genesForSymbols', function (req, res) {
-	var data = req.body;
-	var symbols = data.terms;
-	var returnType = data.returnType;
-	
+	const data = req.body;
+	const symbols = data.terms;
+	const returnType = data.returnType;
+
 //	console.log(data);
 	if (!symbols && !returnType) {
 		res.status(400).send("<h1>400: Search terms or returnType not provided!</h1>");
 		return
 	}
-	
-	var promises = [];
-	
+
+	const promises = [];
+
 	for (i = 0; i < symbols.length; i++) {
-		var nodeMatches = new Promise(function (resolve, reject) {
+		const nodeMatches = new Promise(function (resolve, reject) {
 			db.genes.find({prefLabel: symbols[i]}, function (err, docs) {
 				if (!docs) {
 					resolve(null)
 				}
 				resolve(docs);
-				});
 			});
-		
+		});
+
 		promises.push(nodeMatches);
 	}
 	
@@ -268,8 +268,8 @@ app.post('/genesForSymbols', function (req, res) {
 	// 	console.log(nodes);
 	// 	console.log(returnType);
 		if (returnType === 'tsv') {
-			var tsv = "uri\tprefLabel\tdescription\n";
-			
+			let tsv = "uri\tprefLabel\tdescription\n";
+
 			for (let matches of resolvedMatches) {
 				for (let node of matches) {
 					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition+'\t'+node.reviewed+'\n';
@@ -284,28 +284,28 @@ app.post('/genesForSymbols', function (req, res) {
 
 
 app.post('/genesFromProt', function (req, res) {
-	var data = req.body;
-	var protUris = data.uris;
-	var returnType = data.returnType;
-	
+	const data = req.body;
+	const protUris = data.uris;
+	const returnType = data.returnType;
+
 //	console.log(data);
 	if (!protUris && !returnType) {
 		res.status(400).send("<h1>400: Search terms or returnType not provided!</h1>");
 		return
 	}
-	
-	var promises = [];
-	
+
+	const promises = [];
+
 	for (i = 0; i < protUris.length; i++) {
-		var nodeMatches = new Promise(function (resolve, reject) {
+		const nodeMatches = new Promise(function (resolve, reject) {
 			db.genes.find({encodes: protUris[i]}, function (err, docs) {
 				if (!docs) {
 					resolve(null)
 				}
 				resolve(docs);
-				});
 			});
-		
+		});
+
 		promises.push(nodeMatches);
 	}
 	
@@ -314,8 +314,8 @@ app.post('/genesFromProt', function (req, res) {
 	// 	console.log(nodes);
 	// 	console.log(returnType);
 		if (returnType === 'tsv') {
-			var tsv = "uri\tprefLabel\tdescription\n";
-			
+			let tsv = "uri\tprefLabel\tdescription\n";
+
 			for (let matches of resolvedMatches) {
 				for (let node of matches) {
 					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition+'\t'+node.reviewed+'\n';
@@ -329,9 +329,9 @@ app.post('/genesFromProt', function (req, res) {
 });
 
 app.get('/fetch', function (req, res) {
-	var uri = req.query.uri;
-	var label = req.query.label;
-	
+	const uri = req.query.uri;
+	const label = req.query.label;
+
 	if (!uri && !label) {
 		res.status(400).send("<h1>400: URI or label not provided!</h1>");
 		return
@@ -374,21 +374,20 @@ app.get('/fetch', function (req, res) {
 
 app.get('/getGenexMetadataFromIDs', function (req, res) {
 
-	var pubmedId = req.query.pubmedId;
-	var tfSymbol = req.query.tf;
-	var tgSymbol = req.query.tg;
-	var limit = 20;
-	
+	const pubmedId = req.query.pubmedId;
+	const tfSymbol = req.query.tf;
+	const tgSymbol = req.query.tg;
+	const limit = 20;
+
 	if (!pubmedId) {
 		if (!(tfSymbol && tgSymbol)) {
 			res.status(400).send("<h1>400: PubmedID or both TF and TG must be provided!</h1>");
 			return
 		}
 	}
-	
-	
 
-	var collection = sentenceDB.metadata_genex;
+
+	const collection = sentenceDB.metadata_genex;
 
 	if (tfSymbol && tgSymbol) {
 		// Search for specific pubmedId for specific interaction:
@@ -431,10 +430,10 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 app.get('/getGenexMetadata', function (req, res) {
 
 
-	var pubmedId = req.query.pubmedId;
-	var tf = req.query.tf;
-	var tg = req.query.tg;
-	var limit = 20;
+	const pubmedId = req.query.pubmedId;
+	const tf = req.query.tf;
+	const tg = req.query.tg;
+	const limit = 20;
 
 	console.log('Fetching TF-TG Metadata for relation between '+tf+' and '+tg+' with PubMed ID: '+pubmedId);
 
@@ -446,7 +445,7 @@ app.get('/getGenexMetadata', function (req, res) {
 		}
 	}
 
-	var collection = sentenceDB.metadata_genex;
+	const collection = sentenceDB.metadata_genex;
 
 	if (pubmedId && tf && tg) {
 		// Search for specific pubmedId for specific interaction:
@@ -497,10 +496,10 @@ app.get('/getGenexMetadata', function (req, res) {
 });
 
 app.get('/prefixPrefLabelSearch', function (req, res) {
-	var term = req.query.term;
-	var type = req.query.type;
-	var limit = 20;
-	
+	const term = req.query.term;
+	const type = req.query.type;
+	let limit = 20;
+
 	console.log("Searching for term: "+term+" of type: "+type);
 	
 	if (limit === null) {
@@ -523,8 +522,8 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 	}
 	
 	console.log("Searching for nodes starting with: "+term);
-	var regexTerm = new RegExp('^'+term);
-	
+	const regexTerm = new RegExp('^' + term);
+
 	collection.find({prefLabel: { $regex: regexTerm }}).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) { 
 			console.log(err);
@@ -540,10 +539,10 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 });
 
 app.get('/prefixLabelSearch', function (req, res) {
-	var term = req.query.term;
-	var type = req.query.type;
-	var limit = 20;
-	
+	const term = req.query.term;
+	const type = req.query.type;
+	let limit = 20;
+
 	console.log("Searching for term: "+term+" of type: "+type);
 	
 	if (limit === null) {
@@ -566,10 +565,10 @@ app.get('/prefixLabelSearch', function (req, res) {
 	}
 	
 	console.log("Searching for nodes starting with: "+term);
-	var regexTerm = new RegExp('^'+term.toLowerCase());
-	
-	var searchTerm = { $or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }, { _id: term }]};
-	
+	const regexTerm = new RegExp('^' + term.toLowerCase());
+
+	const searchTerm = {$or: [{lcLabel: regexTerm}, {synonyms: regexTerm}, {_id: term}]};
+
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) { 
 			console.log(err);
@@ -605,10 +604,10 @@ app.get('/downloadLabels', function (req, res) {
 			return
 		}
 		if (format === 'tsv') {
-			var tsv = "label\turi\n";
+			let tsv = "label\turi\n";
 
 			for (i = 0; i < docs.length; i++) {
-				var node = docs[i];
+				const node = docs[i];
 				if (node != null) {
 					tsv += `${node.prefLabel}\t${node._id}\n`;
 				}
@@ -626,7 +625,7 @@ app.post('/prefixLabelSearch', function (req, res) {
 	const type = data.type;
 	const term = data.term;
 
-	var limit = 20;
+	const limit = 20;
 
 	console.log("Searching for term: "+term+" of type: "+type);
 
@@ -646,9 +645,9 @@ app.post('/prefixLabelSearch', function (req, res) {
 	}
 
 	console.log("Searching for nodes starting with: "+term);
-	var regexTerm = new RegExp('^'+term.toLowerCase());
+	const regexTerm = new RegExp('^' + term.toLowerCase());
 
-	var searchTerm = taxa === undefined ? { $or: [{ lcLabel: regexTerm }, { synonyms: { $in: regexTerm}}, { _id: term }]} : { $and: [{$or: [{ lcLabel: regexTerm }, { synonyms: { $in: regexTerm}}]}, { taxon: { $in: taxa }}]};
+	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {synonyms: {$in: regexTerm}}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {synonyms: {$in: regexTerm}}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
@@ -667,10 +666,10 @@ app.post('/prefixLabelSearch', function (req, res) {
 
 
 app.get('/labelSearch', function (req, res) {
-	var term = req.query.term;
-	var type = req.query.type;
-	var limit = req.query.limit;
-	
+	const term = req.query.term;
+	const type = req.query.type;
+	let limit = req.query.limit;
+
 	if (limit === null) {
 		limit = 20;
 	}
@@ -691,7 +690,7 @@ app.get('/labelSearch', function (req, res) {
 	}
 	
 	console.log("Searching "+type+"s for nodes containing: "+term);
-	var regexTerm = new RegExp(term, 'i');
+	const regexTerm = new RegExp(term, 'i');
 	//$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]
 	//collection.find({prefLabel: { $regex: regexTerm }}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
 	collection.find({$or: [{ prefLabel: { $regex: regexTerm } }, { _id: term }]}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
