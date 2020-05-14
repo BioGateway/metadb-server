@@ -621,6 +621,7 @@ app.get('/downloadLabels', function (req, res) {
 	})
 });
 
+// THIS IS THE MAIN AUTOCOMPLETE CALL
 app.post('/prefixLabelSearch', function (req, res) {
 	const data = req.body;
 	const taxa = data.taxa;
@@ -648,7 +649,7 @@ app.post('/prefixLabelSearch', function (req, res) {
 
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
-	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}]}, {taxon: {$in: taxa}}]};
+	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}, {definition: regexTerm}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}, {definition: regexTerm}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
