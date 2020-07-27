@@ -2,11 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongojs = require('mongojs');
-const sentenceDB = mongojs('biogw-dict', ['all']);
 
 const databaseName = process.argv[2] || 'bgw-prod';
 const db = mongojs(databaseName, ['all']);
 const port = process.argv[3] || 3002;
+const sentenceDB = mongojs('extri', ['all']);
 
 const app = express();
 
@@ -389,7 +389,7 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 	}
 
 
-	const collection = sentenceDB.metadata_genex;
+	const collection = sentenceDB.sentences;
 
 	if (tfSymbol && tgSymbol) {
 		// Search for specific pubmedId for specific interaction:
@@ -447,7 +447,7 @@ app.get('/getGenexMetadata', function (req, res) {
 		}
 	}
 
-	const collection = sentenceDB.metadata_genex;
+	const collection = sentenceDB.sentences;
 
 	if (pubmedId && tf && tg) {
 		// Search for specific pubmedId for specific interaction:
