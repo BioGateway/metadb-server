@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongojs = require('mongojs');
+const sentenceDB = mongojs('biogw-dict', ['all']);
 
 const databaseName = process.argv[2] || 'bgw-prod';
 const db = mongojs(databaseName, ['all']);
@@ -35,7 +36,7 @@ app.get('/test', function (req, res) {
 	res.status(200).send('<h1>Connection Successful!</h1> <p>Successfully connected to BioGateway REST endpoint.</p>')
 });
 
-function getCollectionForUri(uri) {	
+function getCollectionForUri(uri) {
 	if (uri.startsWith('http://rdf.biogateway.eu/prot/')) {
 		return db.prot;
 	} else if (uri.startsWith('http://purl.bioontology.org/ontology/OMIM/')) {
@@ -87,7 +88,7 @@ app.get('/findNodesWithFieldValue', function (req, res) {
 	const value = req.query.value; // The value to match.
 	const type = req.query.type; // The node type. I.e. "Protein" or "Gene".
 	let limit = req.query.limit; // The max number of results.
-	
+
 	if (limit === null) {
 		limit = 20;
 	}
@@ -105,19 +106,19 @@ app.get('/findNodesWithFieldValue', function (req, res) {
 		res.status(400).send("<h1>400: Type not provided!</h1>");
 		return
 	}
-	
+
 	const collection = getCollectionForType(type);
 	if (!collection) {
 		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
 		return
 	}
-	
+
 	console.log("Searching "+type+"s for nodes with "+field+": "+value);
 	const searchTerm = {};
 	searchTerm[field] = value;
-	
+
 	collection.find(searchTerm).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
-		if (err) { 
+		if (err) {
 			console.log(err);
 			return
 		}
@@ -160,14 +161,14 @@ app.post('/findNodesWithSynonyms', function (req, res) {
 	const type = data.nodeType;
 	const taxa = data.taxa;
 	const collection = getCollectionForType(type);
-	
+
 	console.log("Searching in collection: " + collection);
 
 	// If taxa is defined, the query will be constrained by it.
 	const searchTerm = taxa === undefined ? {$or: [{prefLabel: {$in: values}}, {lcSynonyms: {$in: values}}]} : {$and: [{$or: [{prefLabel: {$in: values}}, {lcSynonyms: {$in: values}}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm, function (err, docs) {
-		if (err) { 
+		if (err) {
 			console.log(err);
 			return
 		}
@@ -201,10 +202,10 @@ app.post('/fetch', function (req, res) {
 				resolve(docs);
 				});
 			});
-		
+
 		promises.push(node);
 	}
-	
+
 	Promise.all(promises).then(function (nodes) {
 	// console.log("Nodes:");
 	// 	console.log(nodes);
@@ -262,7 +263,7 @@ app.post('/genesForSymbols', function (req, res) {
 
 		promises.push(nodeMatches);
 	}
-	
+
 	Promise.all(promises).then(function (resolvedMatches) {
 	// console.log("Nodes:");
 	// 	console.log(nodes);
@@ -308,7 +309,7 @@ app.post('/genesFromProt', function (req, res) {
 
 		promises.push(nodeMatches);
 	}
-	
+
 	Promise.all(promises).then(function (resolvedMatches) {
 	// console.log("Nodes:");
 	// 	console.log(nodes);
@@ -336,14 +337,14 @@ app.get('/fetch', function (req, res) {
 		res.status(400).send("<h1>400: URI or label not provided!</h1>");
 		return
 	}
-	
+
 	if (uri) {
 	console.log("Fetching : "+uri);
-	
+
 	const collection = getCollectionForUri(uri);
 
 	collection.findOne({_id: uri}, function (err, docs) {
-		if (err) { 
+		if (err) {
 			console.log(err);
 			return
 		}
@@ -359,7 +360,7 @@ app.get('/fetch', function (req, res) {
 		console.log("Fetching: "+label);
 
 		db.proteins.findOne({prefLabel: label}, function (err, docs) {
-			if (err) { 
+			if (err) {
 				console.log(err);
 				return
 			}
@@ -389,11 +390,11 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 	}
 
 
-	const collection = sentenceDB.sentences;
+	const collection = sentenceDB.metadata_genex;
 
 	if (tfSymbol && tgSymbol) {
 		// Search for specific pubmedId for specific interaction:
-		
+
 		console.log("Searching for sentences between "+tfSymbol+" and "+tgSymbol+".");
 		collection.find({pubmedId: pubmedId, TF: tfSymbol, TG: tgSymbol}, function (err, docs) {
 			if (err) {
@@ -447,7 +448,7 @@ app.get('/getGenexMetadata', function (req, res) {
 		}
 	}
 
-	const collection = sentenceDB.sentences;
+	const collection = sentenceDB.metadata_genex;
 
 	if (pubmedId && tf && tg) {
 		// Search for specific pubmedId for specific interaction:
@@ -503,11 +504,11 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 	let limit = 20;
 
 	console.log("Searching for term: "+term+" of type: "+type);
-	
+
 	if (limit === null) {
 		limit = 20;
 	}
-	
+
 	if (!term) {
 		res.status(400).send("<h1>400: Term not provided!</h1>");
 		return
@@ -516,18 +517,18 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 		res.status(400).send("<h1>400: Type not provided!</h1>");
 		return
 	}
-	
+
 	const collection = getCollectionForType(type);
 	if (!collection) {
 		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
 		return
 	}
-	
+
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term);
 
 	collection.find({prefLabel: { $regex: regexTerm }}).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
-		if (err) { 
+		if (err) {
 			console.log(err);
 			return
 		}
@@ -546,11 +547,11 @@ app.get('/prefixLabelSearch', function (req, res) {
 	let limit = 20;
 
 	console.log("Searching for term: "+term+" of type: "+type);
-	
+
 	if (limit === null) {
 		limit = 20;
 	}
-	
+
 	if (!term) {
 		res.status(400).send("<h1>400: Term not provided!</h1>");
 		return
@@ -559,13 +560,13 @@ app.get('/prefixLabelSearch', function (req, res) {
 		res.status(400).send("<h1>400: Type not provided!</h1>");
 		return
 	}
-	
+
 	const collection = getCollectionForType(type);
 	if (!collection) {
 		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
 		return
 	}
-	
+
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
 
@@ -621,6 +622,7 @@ app.get('/downloadLabels', function (req, res) {
 	})
 });
 
+// THIS IS THE MAIN AUTOCOMPLETE CALL
 app.post('/prefixLabelSearch', function (req, res) {
 	const data = req.body;
 	const taxa = data.taxa;
@@ -648,7 +650,7 @@ app.post('/prefixLabelSearch', function (req, res) {
 
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
-	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}]}, {taxon: {$in: taxa}}]};
+	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]}, {taxon: {$in: taxa}}]};
 
 	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
@@ -674,7 +676,7 @@ app.get('/labelSearch', function (req, res) {
 	if (limit === null) {
 		limit = 20;
 	}
-	
+
 	if (!term) {
 		res.status(400).send("<h1>400: Term not provided!</h1>");
 		return
@@ -683,13 +685,13 @@ app.get('/labelSearch', function (req, res) {
 		res.status(400).send("<h1>400: Type not provided!</h1>");
 		return
 	}
-	
+
 	const collection = getCollectionForType(type);
 	if (!collection) {
 		res.status(400).send("<h1>400: Unsupported type: "+type+"</h1>");
 		return
 	}
-	
+
 	console.log("Searching "+type+"s for nodes containing: "+term);
 	const regexTerm = new RegExp(term, 'i');
 	//$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]
