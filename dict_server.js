@@ -7,7 +7,6 @@ const sentenceDB = mongojs('biogw-dict', ['all']);
 const databaseName = process.argv[2] || 'bgw-prod';
 const db = mongojs(databaseName, ['all']);
 const port = process.argv[3] || 3002;
-const sentenceDB = mongojs('extri', ['all']);
 
 const app = express();
 
