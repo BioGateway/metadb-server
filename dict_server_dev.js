@@ -389,7 +389,7 @@ app.get('/getGenexMetadataFromIDs', function (req, res) {
 	}
 
 
-	const collection = sentenceDB.metadata_genex;
+	const collection = sentenceDB.sentences;
 
 	if (tfSymbol && tgSymbol) {
 		// Search for specific pubmedId for specific interaction:
@@ -447,7 +447,7 @@ app.get('/getGenexMetadata', function (req, res) {
 		}
 	}
 
-	const collection = sentenceDB.metadata_genex;
+	const collection = sentenceDB.sentences;
 
 	if (pubmedId && tf && tg) {
 		// Search for specific pubmedId for specific interaction:
