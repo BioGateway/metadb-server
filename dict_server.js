@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongojs = require('mongojs');
-const sentenceDB = mongojs('biogw-dict', ['all']);
+const sentenceDB = mongojs('extri', ['all']);
 
 const databaseName = process.argv[2] || 'bgw-prod';
 const db = mongojs(databaseName, ['all']);
