@@ -4,6 +4,7 @@ const https = require('https');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongojs = require('mongojs');
+const path = require("path");
 
 const sentenceDB = mongojs('extri', ['all']);
 const databaseName = process.argv[2] || 'bgw-prod';
