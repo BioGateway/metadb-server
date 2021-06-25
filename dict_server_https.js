@@ -10,8 +10,8 @@ const databaseName = process.argv[2] || 'bgw-prod';
 const db = mongojs(databaseName, ['all']);
 const port = process.argv[3] || 3003;
 
-const privateKey = fs.readFileSync( './certs/privkey.pem' );
-const certificate = fs.readFileSync( './certs/cert.pem' );
+const privKey = fs.readFileSync( path.join(__dirname, './certs/privkey.pem') );
+const cert = fs.readFileSync( path.join(__dirname, './certs/cert.pem') );
 
 const app = express();
 
@@ -29,8 +29,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 
 https.createServer({
-	key: privateKey,
-	cert: certificate
+	key: privKey,
+	cert: cert
 }, app).listen(port, function () {
 	console.log('Server started on port: '+port+' with database '+databaseName);
 	db.prot.runCommand('count', function (err, res) {
