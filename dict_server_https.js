@@ -1,12 +1,17 @@
 const express = require('express');
+const fs = require('fs');
+const https = require('https');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongojs = require('mongojs');
-const sentenceDB = mongojs('extri', ['all']);
 
+const sentenceDB = mongojs('extri', ['all']);
 const databaseName = process.argv[2] || 'bgw-prod';
 const db = mongojs(databaseName, ['all']);
-const port = process.argv[3] || 3002;
+const port = process.argv[3] || 3003;
+
+const privateKey = fs.readFileSync( './certs/privkey.pem' );
+const certificate = fs.readFileSync( './certs/cert.pem' );
 
 const app = express();
 
@@ -22,7 +27,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
-app.listen(port, function () {
+
+https.createServer({
+	key: privateKey,
+	cert: certificate
+}, app).listen(port, function () {
 	console.log('Server started on port: '+port+' with database '+databaseName);
 	db.prot.runCommand('count', function (err, res) {
 		if (err) { console.log(err) }
