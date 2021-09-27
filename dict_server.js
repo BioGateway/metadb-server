@@ -2,10 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongojs = require('mongojs');
-const sentenceDB = mongojs('extri', ['all']);
+const dbUrl = 'mongodb://mongo:27017/'
+const sentenceDB = mongojs(dbUrl+'extri', ['all']);
 
 const databaseName = process.argv[2] || 'bgw-prod';
-const db = mongojs(databaseName, ['all']);
+const db = mongojs(dbUrl+databaseName, ['all']);
 const port = process.argv[3] || 3002;
 
 const app = express();
