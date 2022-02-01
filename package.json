@@ -1,11 +1,11 @@
 {
-  "name": "express-app",
+  "name": "metadb-server",
   "version": "1.0.0",
   "description": "",
   "main": "dict_server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dict_server.js"
+    "start": "node dict_server.js bgw-3402"
   },
   "author": "",
   "license": "ISC",

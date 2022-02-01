@@ -1,2 +1,4 @@
-/db/diagnostic.data/
 /node_modules/
+/db/
+/updater/venv
+/updater/.idea

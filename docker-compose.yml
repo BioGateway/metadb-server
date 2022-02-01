@@ -1,12 +1,12 @@
 version: '3.3'
 services:
   app:
-    container_name: biogw-metadb-prod
+    depends_on:
+      - mongo
     restart: always
     build: .
     ports:
-    - 3001:3001
-    - 9229:9229
+    - 3002:3001
     command:
       - npm
       - "run"
@@ -14,13 +14,8 @@ services:
     volumes:
     - ./:/app
   mongo:
-    container_name: biogw-metadb-mongo
     image: mongo
     expose:
-    - 27017
-    ports:
-      - 27027:27017
+      - 27017
     volumes:
     - ./db:/data/db
-volumes:
-  dscor-data:
