@@ -18,8 +18,6 @@ parser = argparse.ArgumentParser(
     description='Update the BioGateway Metadata Cache with new data from the SPARQL endpoint.')
 parser.add_argument('hostname', metavar='hostname', type=str,
                     help='The hostname of the BioGateway SPARQL endpoint to be loaded from.')
-parser.add_argument('port', metavar='port', type=str,
-                    help='The port of the BioGateway SPARQL endpoint to be loaded from.')
 parser.add_argument('dbName', metavar='db-name', type=str, help='The MongoDB database to store the cached data')
 parser.add_argument('--datatype', type=str, help='Limit update to this data type.')
 parser.add_argument('--field', type=str, help='Limit update to this field type.')
@@ -29,7 +27,7 @@ parser.add_argument('--parallel', default=False, dest='parallel', action='store_
 
 args = parser.parse_args()
 
-baseUrl = args.hostname + ":" + args.port
+baseUrl = args.hostname
 dbName = args.dbName
 wipeData = args.wipe
 testingMode = args.testing
