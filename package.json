@@ -5,7 +5,7 @@
   "main": "dict_server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dict_server.js bgw-3402"
+    "start": "node dict_server.js metadb"
   },
   "author": "",
   "license": "ISC",
@@ -13,7 +13,7 @@
     "body-parser": "^1.18.2",
     "cors": "^2.8.4",
     "express": "^4.16.2",
-    "mongojs": "^2.5.0",
+    "mongojs": "^3.1.0",
     "mongoose": "^5.0.4",
     "nodemon": "^1.15.0",
     "promised-mongo": "^1.2.0"
