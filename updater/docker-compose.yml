@@ -13,5 +13,5 @@ services:
     command:
       - python
       - "./main.py"
-      - "3402.biogateway.eu"
+      - "ssb4.nt.ntnu.no:34022/sparql"
       - "bgw-3402"
