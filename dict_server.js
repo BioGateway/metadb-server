@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongojs = require('mongojs');
-const dbPort = process.argv[3] || 27037
+const dbPort = process.argv[3] || 27017
 const dbUrl = `mongodb://mongo:${dbPort}/`
 const sentenceDB = mongojs(dbUrl+'extri', ['all']);
 
