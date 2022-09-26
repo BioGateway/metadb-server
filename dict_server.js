@@ -6,7 +6,7 @@ const dbPort = process.argv[3] || 27017
 const dbUrl = `mongodb://mongo:${dbPort}/`
 const sentenceDB = mongojs(dbUrl+'extri', ['all']);
 
-const databaseName = process.argv[2] || 'bgw-prod';
+const databaseName = process.argv[2] || 'metadb';
 const db = mongojs(dbUrl+databaseName, ['all']);
 const port = 3001;
 
