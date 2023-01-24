@@ -5,7 +5,9 @@
   "main": "dict_server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dict_server.js"
+    "start": "node dict_server.js",
+    "dev": "node dict_server.js metadb 27027 debug",
+    "dbcontainer": "docker run -p 27027:27017 -v $(pwd)/db:/data/db --rm mongo"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +16,7 @@
     "cors": "^2.8.4",
     "express": "^4.16.2",
     "mongojs": "^3.1.0",
+    "morgan": "^1.10.0",
     "nodemon": "^1.15.0",
     "promised-mongo": "^1.2.0"
   }

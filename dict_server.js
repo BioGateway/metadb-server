@@ -6,6 +6,8 @@ const dbPort = process.argv[3] || 27017
 const dbUrl = `mongodb://mongo:${dbPort}/`
 const sentenceDB = mongojs(dbUrl+'extri', ['all']);
 
+const DEBUG_MODE = process.argv[4] === "debug" || false
+
 const databaseName = process.argv[2] || 'metadb';
 const db = mongojs(dbUrl+databaseName, ['all']);
 const port = 3001;
@@ -21,8 +23,17 @@ console.log = function(data)
 };
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(bodyParser.urlencoded({extended: false}));
+
+if (DEBUG_MODE) {
+	const morgan = require('morgan')
+	morgan.token('body', req => {
+		return JSON.stringify(req.body)
+	})
+	app.use(morgan(':method :url :body'))
+}
+
 
 app.listen(port, function () {
 	console.log('Server started on port: '+port+' with database '+databaseName);
@@ -196,7 +207,7 @@ app.post('/fetch', function (req, res) {
 		const uri = uris[i];
 		const collection = getCollectionForUri(uri);
 		var node = new Promise(function (resolve, reject) {
-			collection.findOne({_id: uri}, function (err, docs) {
+			collection.findOne({uri: uri}, function (err, docs) {
 				if (!docs) {
 					resolve(null)
 				}
@@ -222,7 +233,7 @@ app.post('/fetch', function (req, res) {
 			for (i = 0; i < nodes.length; i++) {
 				const node = nodes[i];
 				if (node != null) {
-					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition;
+					tsv += node.uri+'\t'+node.prefLabel+'\t'+node.definition;
 					if (extraFields && extraFields.length) {
 						for (const index in extraFields) {
 							data = node[extraFields[index]];
@@ -274,7 +285,7 @@ app.post('/genesForSymbols', function (req, res) {
 
 			for (let matches of resolvedMatches) {
 				for (let node of matches) {
-					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition+'\t'+node.reviewed+'\n';
+					tsv += node.uri+'\t'+node.prefLabel+'\t'+node.definition+'\t'+node.reviewed+'\n';
 				}
 			}
 			res.send(tsv);
@@ -320,7 +331,7 @@ app.post('/genesFromProt', function (req, res) {
 
 			for (let matches of resolvedMatches) {
 				for (let node of matches) {
-					tsv += node._id+'\t'+node.prefLabel+'\t'+node.definition+'\t'+node.reviewed+'\n';
+					tsv += node.uri+'\t'+node.prefLabel+'\t'+node.definition+'\t'+node.reviewed+'\n';
 				}
 			}
 			res.send(tsv);
@@ -344,7 +355,7 @@ app.get('/fetch', function (req, res) {
 
 	const collection = getCollectionForUri(uri);
 
-	collection.findOne({_id: uri}, function (err, docs) {
+	collection.findOne({uri: uri}, function (err, docs) {
 		if (err) {
 			console.log(err);
 			return
@@ -504,7 +515,7 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 	const type = req.query.type;
 	let limit = 20;
 
-	console.log("Searching for term: "+term+" of type: "+type);
+	console.log("prefixPrefLabelSearch: Searching for term: "+term+" of type: "+type);
 
 	if (limit === null) {
 		limit = 20;
@@ -528,7 +539,7 @@ app.get('/prefixPrefLabelSearch', function (req, res) {
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term);
 
-	collection.find({prefLabel: { $regex: regexTerm }}).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
+	collection.find({prefLabel: { $regex: regexTerm }}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
 			console.log(err);
 			return
@@ -547,7 +558,7 @@ app.get('/prefixLabelSearch', function (req, res) {
 	const type = req.query.type;
 	let limit = 20;
 
-	console.log("Searching for term: "+term+" of type: "+type);
+	console.log("prefixLabelSearch Searching for term: "+term+" of type: "+type);
 
 	if (limit === null) {
 		limit = 20;
@@ -571,9 +582,9 @@ app.get('/prefixLabelSearch', function (req, res) {
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
 
-	const searchTerm = {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]};
+	const searchTerm = {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {uri: term}]};
 
-	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
+	collection.find(searchTerm).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
 			console.log(err);
 			return
@@ -613,7 +624,7 @@ app.get('/downloadLabels', function (req, res) {
 			for (i = 0; i < docs.length; i++) {
 				const node = docs[i];
 				if (node != null) {
-					tsv += `${node.prefLabel}\t${node._id}\n`;
+					tsv += `${node.prefLabel}\t${node.uri}\n`;
 				}
 			}
 			res.send(tsv);
@@ -630,9 +641,9 @@ app.post('/prefixLabelSearch', function (req, res) {
 	const type = data.type;
 	const term = data.term;
 
-	const limit = 20;
+	const limit = data.limit || 20
 
-	console.log("Searching for term: "+term+" of type: "+type);
+	console.log("prefixLabelSearch Searching for term: "+term+" of type: "+type);
 
 	if (!term) {
 		res.status(400).send("<h1>400: Term not provided!</h1>");
@@ -651,9 +662,9 @@ app.post('/prefixLabelSearch', function (req, res) {
 
 	console.log("Searching for nodes starting with: "+term);
 	const regexTerm = new RegExp('^' + term.toLowerCase());
-	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {_id: term}]}, {taxon: {$in: taxa}}]};
+	const searchTerm = taxa === undefined ? {$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {uri: term}]} : {$and: [{$or: [{lcLabel: regexTerm}, {lcSynonyms: regexTerm}, {uri: term}]}, {taxon: {$in: taxa}}]};
 
-	collection.find(searchTerm).sort({ fromScore : -1 }).limit(parseInt(limit), function (err, docs) {
+	collection.find(searchTerm).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
 			console.log(err);
 			return
@@ -697,7 +708,7 @@ app.get('/labelSearch', function (req, res) {
 	const regexTerm = new RegExp(term, 'i');
 	//$or: [{ lcLabel: regexTerm }, { synonyms: regexTerm }]
 	//collection.find({prefLabel: { $regex: regexTerm }}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
-	collection.find({$or: [{ prefLabel: { $regex: regexTerm } }, { _id: term }]}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
+	collection.find({$or: [{ prefLabel: { $regex: regexTerm } }, { uri: term }]}).sort({ refScore : -1 }).limit(parseInt(limit), function (err, docs) {
 		if (err) {
 			console.log(err);
 			return

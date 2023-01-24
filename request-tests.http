@@ -1,0 +1,7 @@
+POST http://localhost:3001/prefixLabelSearch
+Content-Type: application/json
+
+{"term":"p","type":"protein","limit":"1","taxa":["http://purl.obolibrary.org/obo/NCBITaxon_9606"]}
+###
+
+
