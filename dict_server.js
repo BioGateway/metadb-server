@@ -49,7 +49,7 @@ app.get('/test', function (req, res) {
 });
 
 function getCollectionForUri(uri) {
-	if (uri.startsWith('http://rdf.biogateway.eu/prot/')) {
+	if (uri.startsWith('http://uniprot.org/uniprot')) {
 		return db.prot;
 	} else if (uri.startsWith('http://purl.bioontology.org/ontology/OMIM/')) {
 		return db.omim;
@@ -250,6 +250,7 @@ app.post('/fetch', function (req, res) {
 	});
 });
 
+// UNUSED
 app.post('/genesForSymbols', function (req, res) {
 	const data = req.body;
 	const symbols = data.terms;
@@ -295,7 +296,7 @@ app.post('/genesForSymbols', function (req, res) {
 	});
 });
 
-
+// UNUSED
 app.post('/genesFromProt', function (req, res) {
 	const data = req.body;
 	const protUris = data.uris;
